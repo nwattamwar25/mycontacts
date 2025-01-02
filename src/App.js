@@ -4,6 +4,8 @@ import Dashboard from './componant/Dashboard/Dashboard';
 import AddUser from './componant/Dashboard/Addcontact/AddUser';
 import Login from './componant/Login/Login';
 import EditUser from './componant/Dashboard/Addcontact/EditContact';
+import Import from './componant/Dashboard/Import';
+import Export from './componant/Dashboard/Export';
 
 
 // Create Authentication Context
@@ -95,6 +97,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AddUser/>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/import"
+              element={
+                <ProtectedRoute>
+                  <Import/>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/export"
+              element={
+                <ProtectedRoute>
+                  <Export/>
                 </ProtectedRoute>
               }
             />
