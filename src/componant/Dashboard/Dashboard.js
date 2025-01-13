@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchContacts, deleteContact } from '../../redux/slices/contactSlice';
 import Navbar from '../Navbar/Navbar';
@@ -9,11 +9,13 @@ import Card from '../ui/Card';
 import Display from '../Display/Display';
 import DeleteDisplay from '../Display/DeleteDisplay'
 import Button from '../ui/Button';
+import { AuthContext } from '../../App';
 
 const Dashboard = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    
+    const { token } = useContext(AuthContext);
+
     // Get contacts from Redux store
     const { contacts, loading, error } = useSelector((state) => state.contacts);
 
@@ -25,8 +27,10 @@ const Dashboard = () => {
 
     // Fetch contacts when component mounts
     useEffect(() => {
-        dispatch(fetchContacts());
-    }, [dispatch]);
+        if (token) {
+            dispatch(fetchContacts(token));
+        }
+    }, [dispatch, token]);
 
     const handleAddUser = () => {
         navigate('/addUser');
@@ -43,7 +47,7 @@ const Dashboard = () => {
 
     const handleConfirmDelete = () => {
         if (contactToDelete) {
-            dispatch(deleteContact(contactToDelete.id));
+            dispatch(deleteContact({ id: contactToDelete.id, token }));
             setShowDeleteConfirmation(false);
             setContactToDelete(null);
         }

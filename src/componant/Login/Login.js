@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../App'; 
+import axios from 'axios';
 
 const Login = () => {
     const [signState, setSignState] = useState("Sign In");
@@ -14,46 +15,45 @@ const Login = () => {
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    const users = [
-        { email: "nikhil@test.com", password: "Nikhil@123", userName: "Special_User" }
-    ];
-
-    const submitForm = (event) => {
+    const submitForm = async (event) => {
         event.preventDefault();
         setErrorMessage("");
         setSuccessMessage("");
 
         if (signState === "Sign In") {
-            const user = users.find(
-                u => u.email === email && u.password === passWord
-            ); 
+            try {
+                const response = await axios.post('http://localhost:8081/api/auth/signin', {
+                    username: email, // Assuming email is used as username
+                    password: passWord
+                });
 
+                const { token, user } = response.data;
+                login(user, token);
 
-            if (user) {
                 setSuccessMessage("Login Successful!");
-                login(user);
                 setTimeout(() => {
                     navigate('/');
                 }, 1500);
-            } else {
+            } catch (error) {
                 setErrorMessage("Invalid email or password");
             }
         } else {
             if (userName && email && passWord) {
-                const existingUser = users.find(u => u.email === email);
-                
-                if (existingUser) {
-                    setErrorMessage("Email already registered");
-                } else {
-                    const newUser = { userName, email, password: passWord };
-                    users.push(newUser);
-                    
+                try {
+                    await axios.post('http://localhost:8081/api/auth/signup', {
+                        username: userName,
+                        email,
+                        password: passWord,
+                        roles: ["user"] // Default role
+                    });
                     setSuccessMessage("Registration Successful! Please Sign In");
                     setTimeout(() => {
                         setSignState("Sign In");
                         setEmail(email);  
                         setPassword("");
                     }, 1500);
+                } catch (error) {
+                    setErrorMessage('Registration failed. Please try again.');
                 }
             } else {
                 setErrorMessage("Please fill all fields");
@@ -101,7 +101,6 @@ const Login = () => {
                     </div>
                 </form>
 
-                {/* Error and Success Messages */}
                 {errorMessage && <p className="error-message">{errorMessage}</p>}
                 {successMessage && <p className="success-message">{successMessage}</p>}
 
