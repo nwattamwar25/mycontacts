@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useDispatch } from 'react-redux';
 import { addContact } from '../../../redux/slices/contactSlice';
 import classes from "./AddUser.module.css"
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../../App.js';
 
 const AddUser = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { token } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -33,7 +35,8 @@ const AddUser = () => {
     created_At: ''
   });
 
-   const validateForm = () => {
+  // Validation logic remains the same
+  const validateForm = () => {
     let tempErrors = {};
     let isValid = true;
 
@@ -57,6 +60,7 @@ const AddUser = () => {
     } else {
       tempErrors.phone = '';
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
       tempErrors.email = 'Email is required';
@@ -75,7 +79,6 @@ const AddUser = () => {
       tempErrors.cGroup = '';
     }
 
-  
     if (!formData.created_At) {
       tempErrors.created_At = 'Date is required';
       isValid = false;
@@ -86,7 +89,6 @@ const AddUser = () => {
     setErrors(tempErrors);
     return isValid;
   };
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -103,19 +105,35 @@ const AddUser = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!token) {
+      console.error("No authentication token found");
+      // Handle the no-token case - maybe redirect to login
+      navigate("/login");
+      return;
+    }
+
     if (validateForm()) {
-      dispatch(addContact({
-        ...formData,
-        // Remove generated ID, backend handle ID generation
-        created_At: formData.created_At || new Date().toISOString()
-      })).then(() => {
+      try {
+        await dispatch(addContact({
+          contactData: {
+            ...formData,
+            created_At: formData.created_At || new Date().toISOString()
+          },
+          token
+        })).unwrap();
+        
         navigate("/");
-      }).catch((error) => {
-        console.error("Failed to add contact", error);
-      });
+      } catch (error) {
+        console.error("Failed to add contact:", error);
+        // Optionally set some error state to show to the user
+        setErrors(prev => ({
+          ...prev,
+          submit: error.message || 'Failed to add contact'
+        }));
+      }
     }
   };
   
@@ -125,6 +143,7 @@ const AddUser = () => {
     marginTop: '5px'
   };
   
+  // Rest of the JSX remains the same
   return (
     <div className={classes.cardStyle}>
       <h2 style={{ marginBottom: '20px', textAlign: 'center' }}>Add New User</h2>
@@ -198,6 +217,7 @@ const AddUser = () => {
           </select>
           {errors.cGroup && <div style={errorStyle}>{errors.cGroup}</div>}
         </div>
+
         <div className={classes.formGroupStyle}>
           <label htmlFor="createdAt" className={classes.labelStyle}>
             Created At *
@@ -212,6 +232,8 @@ const AddUser = () => {
           />
           {errors.created_At && <div style={errorStyle}>{errors.created_At}</div>}
         </div>
+
+        {errors.submit && <div style={errorStyle}>{errors.submit}</div>}
 
         <button 
           type="submit" 

@@ -5,7 +5,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: 'http://localhost:8080/api',
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   }
 });
 
@@ -22,9 +22,11 @@ api.interceptors.response.use(
 // Async thunk to fetch contacts
 export const fetchContacts = createAsyncThunk(
   'contacts/fetchContacts',
-  async (_, { rejectWithValue }) => {
+  async (token, { rejectWithValue }) => {
     try {
-      const response = await api.get('/contacts/all');
+      const response = await api.get('/contacts/all', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -37,14 +39,11 @@ export const fetchContacts = createAsyncThunk(
 // Async thunk to add contact
 export const addContact = createAsyncThunk(
   'contacts/addContact',
-  async (contactData, { rejectWithValue }) => {
+  async ({ contactData, token }, { rejectWithValue }) => {
     try {
-      const formattedData = {
-        ...contactData,
-        created_At: contactData.created_At || new Date().toISOString()
-      };
-
-      const response = await api.post('/contacts/save', formattedData);
+      const response = await api.post('/contacts/save', contactData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -57,15 +56,11 @@ export const addContact = createAsyncThunk(
 // Async thunk to update contact
 export const updateContact = createAsyncThunk(
   'contacts/updateContact',
-  async ({ id, contactData }, { rejectWithValue }) => {
+  async ({ id, contactData, token }, { rejectWithValue }) => {
     try {
-      // Ensure created_At is in ISO format if not provided
-      const formattedData = {
-        ...contactData,
-        created_At: contactData.created_At || new Date().toISOString()
-      };
-
-      const response = await api.put(`/contacts/${id}`, formattedData);
+      const response = await api.put(`/contacts/${id}`, contactData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -78,9 +73,11 @@ export const updateContact = createAsyncThunk(
 // Async thunk to delete contact
 export const deleteContact = createAsyncThunk(
   'contacts/deleteContact',
-  async (id, { rejectWithValue }) => {
+  async ({ id, token }, { rejectWithValue }) => {
     try {
-      await api.delete(`/contacts/${id}`);
+      await api.delete(`/contacts/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       return id;
     } catch (error) {
       return rejectWithValue(
